@@ -1,0 +1,83 @@
+import heapq
+from collections import Counter
+
+class Node:
+    def __init__(self, value, key=None, left=None, right=None):
+        self.value = value
+        self.key = key
+        self.left = left
+        self.right = right
+
+    def __lt__(self, other):
+        return self.value < other.value
+
+
+def huffman_tree(text):
+    freq = Counter(text)
+    heap = [Node(f, ch) for ch, f in freq.items()]
+    heapq.heapify(heap)
+
+    if len(heap) == 1:
+        only = heapq.heappop(heap)
+        return Node(only.value, None, only, None)
+
+    while len(heap) > 1:
+        a = heapq.heappop(heap)
+        b = heapq.heappop(heap)
+        merged = Node(a.value + b.value, None, a, b)
+        heapq.heappush(heap, merged)
+
+    return heap[0]
+
+
+def build_codes(root):
+    codes = {}
+
+    def dfs(node, code):
+        if not node:
+            return
+        if node.key is not None:  # leaf
+            codes[node.key] = code or "0"
+            return
+        dfs(node.left, code + "0")
+        dfs(node.right, code + "1")
+
+    dfs(root, "")
+    return codes
+
+
+def huffman_encode(text):
+    if not text:
+        return "", None, {}
+
+    root = huffman_tree(text)
+    codes = build_codes(root)
+    encoded = "".join(codes[ch] for ch in text)
+    return encoded, root, codes
+
+
+def huffman_decode(encoded, root):
+    if not encoded or not root:
+        return ""
+
+    res = []
+    node = root
+    for bit in encoded:
+        node = node.left if bit == "0" else node.right
+        if node.value is not None:
+            res.append(node.value)
+            node = root
+
+    return "".join(res)
+
+
+
+text = input("Enter a string")
+encoded, root, codes = huffman_encode(text)
+
+print("Original:", text)
+print("Codes:", codes)
+print("Encoded:", encoded)
+
+decoded = huffman_decode(encoded, root)
+print("Decoded:", decoded)
